@@ -34,14 +34,31 @@ def list_transactions(
 ):
     """List transactions with optional filters."""
     client = get_supabase()
-    query = client.table("transactions").select(
-        "transaction_id, timestamp, user_id, driver_id, card_last4, device_id, "
-        "pickup_city, pickup_country, pickup_lat, pickup_lng, amount, currency, "
-        "is_fraudulent, risk_assessments(risk_score, risk_level, triggered_rules)"
-    ).order("timestamp", desc=True).limit(limit).offset(offset)
 
-    result = query.execute()
-    return {"data": result.data, "count": len(result.data)}
+    # Get transactions
+    txn_result = client.table("transactions").select(
+        "transaction_id, timestamp, user_id, driver_id, card_last4, "
+        "pickup_city, pickup_country, amount, currency"
+    ).order("timestamp", desc=True).limit(limit).offset(offset).execute()
+
+    # Get risk assessments for these transactions
+    txn_ids = [t["transaction_id"] for t in txn_result.data]
+    if txn_ids:
+        risk_result = client.table("risk_assessments").select(
+            "transaction_id, risk_score, risk_level"
+        ).in_("transaction_id", txn_ids).execute()
+        risk_map = {r["transaction_id"]: r for r in risk_result.data}
+    else:
+        risk_map = {}
+
+    # Merge
+    data = []
+    for t in txn_result.data:
+        risk = risk_map.get(t["transaction_id"], {})
+        t["risk_assessments"] = [risk] if risk else []
+        data.append(t)
+
+    return {"data": data, "count": len(data)}
 
 
 @router.get("/{transaction_id}")
