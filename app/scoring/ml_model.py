@@ -59,7 +59,7 @@ def train_model(transactions_df: pd.DataFrame, indicators_df: pd.DataFrame):
     ]
 
     # Parse timestamps for time features
-    merged["timestamp"] = pd.to_datetime(merged["timestamp"])
+    merged["timestamp"] = pd.to_datetime(merged["timestamp"], format="ISO8601")
     merged["hour_of_day"] = merged["timestamp"].dt.hour
     merged["day_of_week"] = merged["timestamp"].dt.weekday
     feature_cols.extend(["hour_of_day", "day_of_week"])
