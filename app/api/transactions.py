@@ -35,11 +35,10 @@ def list_transactions(
     """List transactions with optional filters."""
     client = get_supabase()
     query = client.table("transactions").select(
-        "*, risk_assessments(*)"
+        "transaction_id, timestamp, user_id, driver_id, card_last4, device_id, "
+        "pickup_city, pickup_country, pickup_lat, pickup_lng, amount, currency, "
+        "is_fraudulent, risk_assessments(risk_score, risk_level, triggered_rules)"
     ).order("timestamp", desc=True).limit(limit).offset(offset)
-
-    if risk_level:
-        query = query.eq("risk_assessments.risk_level", risk_level)
 
     result = query.execute()
     return {"data": result.data, "count": len(result.data)}
