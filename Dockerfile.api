@@ -7,7 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY data/ ./data/
-COPY ml/ ./ml/
+RUN mkdir -p ./ml
+
+# Generate test data during build
+RUN python data/generate_transactions.py
 
 EXPOSE 8000
 
