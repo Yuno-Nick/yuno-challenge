@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+*.pkl
+.DS_Store
+venv/
+.venv/
+data/transactions.csv
+ml/trained_model.pkl
+ml/scaler.pkl

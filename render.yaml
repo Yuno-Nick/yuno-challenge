@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: oasis-rides-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+    plan: free
+
+  - type: web
+    name: oasis-rides-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile.dashboard
+    envVars:
+      - key: API_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+    plan: free
