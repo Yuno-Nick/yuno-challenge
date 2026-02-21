@@ -12,24 +12,31 @@ def train_ml_model():
     """Train the ML model on current transaction data."""
     client = get_supabase()
 
-    # Get all transactions with risk assessments
-    txn_result = client.table("transactions").select("*").execute()
-    risk_result = client.table("risk_assessments").select("*").execute()
+    try:
+        # Get all transactions with risk assessments (handle >1000 rows)
+        txn_result = client.table("transactions").select(
+            "transaction_id, timestamp, amount, distance_km, duration_minutes, is_fraudulent"
+        ).limit(2000).execute()
+        risk_result = client.table("risk_assessments").select(
+            "transaction_id, velocity_score, geographic_score, amount_score, "
+            "card_testing_score, collusion_score, ato_score, fraud_ring_score"
+        ).limit(2000).execute()
 
-    if not txn_result.data or not risk_result.data:
-        return {"error": "Not enough data. Run the pipeline first."}
+        if not txn_result.data or not risk_result.data:
+            return {"error": "Not enough data. Run the pipeline first."}
 
-    transactions_df = pd.DataFrame(txn_result.data)
-    indicators_df = pd.DataFrame(risk_result.data)
+        transactions_df = pd.DataFrame(txn_result.data)
+        indicators_df = pd.DataFrame(risk_result.data)
 
-    if len(transactions_df) < 50:
-        return {"error": f"Need at least 50 processed transactions. Currently have {len(transactions_df)}."}
+        if len(transactions_df) < 50:
+            return {"error": f"Need at least 50 processed transactions. Currently have {len(transactions_df)}."}
 
-    # Ensure is_fraudulent column exists
-    if "is_fraudulent" not in transactions_df.columns:
-        return {"error": "Transaction data missing is_fraudulent labels."}
+        if "is_fraudulent" not in transactions_df.columns:
+            return {"error": "Transaction data missing is_fraudulent labels."}
 
-    metrics = train_model(transactions_df, indicators_df)
+        metrics = train_model(transactions_df, indicators_df)
+    except Exception as e:
+        return {"error": f"Training failed: {str(e)}"}
 
     # Save metrics to DB
     save_ml_model_metrics(
